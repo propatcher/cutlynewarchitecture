@@ -1,7 +1,7 @@
 from typing import Optional
 from domain.repo.link_repository import LinkRepository
 from domain.entities.link import Link
-from infra.database.models. import LinkModel
+from infra.database.models import LinkModel
 
 class PostgresLinkRepository(LinkRepository):
     def __init__(self, db_session):
