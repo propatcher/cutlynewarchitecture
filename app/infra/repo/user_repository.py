@@ -9,16 +9,22 @@ class UserPostgresRepository(UserRepository):
         self.db = db_session
 
     def get_by_id(self,id:str) -> Optional[User]:
-        model = db.query(UserModel).filter(UserModel.id == id).first()
-        return self._to_entity(model) if model
-    @abstractmethod
-    def get_by_login(self, user: User) -> User:
-        ...
+        model = self.db.query(UserModel).filter(UserModel.id == id).first()
+        return self._to_entity(model) if model else None
+
+    def get_by_login(self,login:str) -> Optional[User]:
+        model = self.db.query(UserModel).filter(UserModel.login == login).first()
+        return self._to_entity(model) if model else None
+    
+    def get_by_email(self,email:str) -> Optional[User]:
+        model = self.db.query(UserModel).filter(UserModel.email == email).first()
+        return self._to_entity(model) if model else None
+
     def _to_entity(self, model:UserModel) -> User:
         return User(
-            id = model.id,
-            username = model.username,
+            id = UUID(model.id),
+            login = model.login,
             email = model.email,
-            feeds = model.feeds
+            hashed_password = model.hashed_password
+            created_at = model.created_at
         )
-    
