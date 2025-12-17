@@ -3,6 +3,7 @@ from typing import Optional
 from domain.repo.user_repository import UserRepository
 from domain.entities.user import User
 from infra.database.models import UserModel
+from uuid import UUID
 
 class UserPostgresRepository(UserRepository):
     def __init__(self, db_session):
@@ -25,6 +26,6 @@ class UserPostgresRepository(UserRepository):
             id = UUID(model.id),
             login = model.login,
             email = model.email,
-            hashed_password = model.hashed_password
+            hashed_password = model.hashed_password,
             created_at = model.created_at
         )
