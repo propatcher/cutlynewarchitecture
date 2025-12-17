@@ -9,7 +9,7 @@ class PostgresLinkRepository(LinkRepository):
     
     def get_by_short_code(self, code: str) -> Optional[Link]:
         model = self.db.query(LinkModel).filter(LinkModel.short_code == code).first()
-        return self._to_entity(model) if model else None
+        return self._to_entity(model) if model
     
     def save(self, link: Link) -> Link:
         model = LinkModel(

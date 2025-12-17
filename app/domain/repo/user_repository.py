@@ -5,7 +5,7 @@ from domain.entities.user import User
 class UserRepository(ABC):
 
     @abstractmethod
-    def get_by_id(self,code:str) -> Optional[User]:
+    def get_by_id(self,id:str) -> Optional[User]:
         ...
     
     @abstractmethod
