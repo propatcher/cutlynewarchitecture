@@ -2,6 +2,8 @@ import hashlib
 import secrets
 from domain.entities.link import Link
 from domain.repo.link_repository import LinkRepository
+from domain.exceptions.link_exceptions import LinkNotFoundError
+from domain.value_objects.short_code import ShortCode
 
 class LinkService:
     def __init__(self, link_repo: LinkRepository):
@@ -10,12 +12,12 @@ class LinkService:
     def create_short_link(self, original_url: str, user_id: str) -> Link:
         short_code = self.generate_short_code()
         link = Link.create(original_url, short_code, user_id)
-        return self.link_repo.save()
+        return self.link_repo.save(link)
     
-    def get_original_url(self, short_code: str) -> str:
+    def get_original_url(self, short_code: ShortCode) -> str:
         link = self.link_repo.get_by_short_code(short_code)
         if not link:
-            raise LinkNotFoundError()
+            raise LinkNotFoundError(short_code)
         
         link.increment_click_count()
         self.link_repo.save(link)
