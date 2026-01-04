@@ -1,25 +1,55 @@
-from abc import ABC, abstractmethod
 from typing import Optional
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from domain.repo.user_repository import UserRepository
 from domain.entities.user import User
 from infra.database.models import UserModel
 from uuid import UUID
 
 class UserPostgresRepository(UserRepository):
-    def __init__(self, db_session):
-        self.db = db_session
+    def __init__(self, db_session: AsyncSession):
+        self.db = db_session    
 
-    def get_by_id(self,id:str) -> Optional[User]:
-        model = self.db.query(UserModel).filter(UserModel.id == id).first()
-        return self._to_entity(model) if model else None
-
-    def get_by_login(self,login:str) -> Optional[User]:
-        model = self.db.query(UserModel).filter(UserModel.login == login).first()
+    async def get_by_id(self,id:str) -> Optional[User]:
+        stmt = select(UserModel).where(UserModel.id == id)
+        result = await self.db.execute(stmt)
+        model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
     
-    def get_by_email(self,email:str) -> Optional[User]:
-        model = self.db.query(UserModel).filter(UserModel.email == email).first()
+    async def get_by_login(self,login:str) -> Optional[User]:
+        stmt = select(UserModel).where(UserModel.login == login)
+        result = await self.db.execute(stmt)
+        model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
+    
+    async def get_by_email(self,email:str) -> Optional[User]:
+        stmt = select(UserModel).where(UserModel.email == email)
+        result = await self.db.execute(stmt)
+        model = result.scalar_one_or_none()
+        return self._to_entity(model) if model else None
+        
+    
+    async def save(self, user: User) -> User:
+        stmt = select(UserModel).where(UserModel.id == str(user.id))
+        result = await self.db.execute(stmt)
+        existing = result.scalar_one_or_none()
+        
+        if existing:
+            existing.login = user.login
+            existing.email = user.email
+            existing.hashed_password = user.hashed_password
+            existing.created_at = user.created_at
+        else:
+            model = UserModel(
+                id=str(user.id),
+                login=user.login,
+                email=user.email,
+                hashed_password=user.hashed_password,
+                created_at=user.created_at
+            )
+            self.db.add(model)
+        
+        return user
 
     def _to_entity(self, model:UserModel) -> User:
         return User(

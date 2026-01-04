@@ -1,38 +1,58 @@
 from typing import Optional
+
+from sqlalchemy import select
+from app.domain.value_objects.short_code import ShortCode
 from domain.repo.link_repository import LinkRepository
 from domain.entities.link import Link
+from sqlalchemy.ext.asyncio import AsyncSession
 from infra.database.models import LinkModel
 
 class PostgresLinkRepository(LinkRepository):
-    def __init__(self, db_session):
+    def __init__(self, db_session: AsyncSession):
         self.db = db_session
     
-    def get_by_short_code(self, code: str) -> Optional[Link]:
-        model = self.db.query(LinkModel).filter(LinkModel.short_code == code).first()
-        return self._to_entity(model) if model else None
-    
-    def get_by_url(self, url: str, user_id: str = None) -> Optional[Link]:
-        query = self.db.query(LinkModel).filter(LinkModel.original_url == url).first()
+    async def get_by_short_code(self, code: ShortCode) -> Optional[Link]:
+        stmt = select(LinkModel).where(LinkModel.short_code == code.value)
+        result = await self.db.execute(stmt)
+        model = result.scalar_one_or_none()
+        return self._to_entity(model) if model else None    
+        
+    async def get_by_url(self, url: str, user_id: str = None) -> Optional[Link]:
+        stmt = select(LinkModel).where(LinkModel.original_url == url)
         if user_id:
-            query = query.filter(LinkModel.user_id == user_id)
-        model = query.first()
+            stmt = stmt.where(LinkModel.user_id == user_id)
+        result = await self.db.execute(stmt)
+        model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
     
-    def save(self, link: Link) -> Link:
-        model = LinkModel(
-            id = link.id,
-            original_url = link.original_url,
-            short_code = link.short_code,
-            user_id = link.user_id,
-            click_count = link.click_count
-        )
-        self.db.add(model)
-        self.db.commit()
-        return link
+    async def save(self, link: Link) -> Link:
+        stmt = select(LinkModel).where(LinkModel.id == link.id)
+        result = await self.db.execute(stmt)
+        existing = result.scalar_one_or_none()
+        
+        if existing:
+            existing.original_url = link.original_url,
+            existing.short_code = link.short_code.value,
+            existing.user_id = link.user_id,
+            existing.click_count = link.click_count
+        
+        else:
+            model = LinkModel(
+                id=link.id,
+                original_url=link.original_url,
+                short_code=link.short_code.value,
+                user_id=link.user_id,
+                created_at=link.created_at,
+                click_count=link.click_count
+            )
+            self.db.add(model)
     
-    def get_user_links(self, user_id: str) -> list[Link]:
-        models = self.db.query(LinkModel).filter(LinkModel.user_id == user_id).all()
-        return [self._to_entity(model) for model in models]
+    async def get_user_links(self, user_id: str) -> list[Link]:
+        stmt = select(LinkModel).where(LinkModel.user_id == user_id)
+        result = await self.db.execute(stmt)
+        model = result.scalar_one_or_none()
+        return self._to_entity(model) if model else None
+        
         
     def _to_entity(self, model: LinkModel) -> Link:
         return Link(

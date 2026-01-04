@@ -1,5 +1,6 @@
 from typing import Optional
 from pydantic import EmailStr
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.domain.entities.user import User
 from app.infra.repo.user_repository import UserPostgresRepository
 from infra.auth.password_hasher import PasswordHasher
@@ -9,7 +10,8 @@ class UserService:
     def __init__(
         self, 
         user_repository: UserPostgresRepository,
-        password_hasher: PasswordHasher
+        password_hasher: PasswordHasher,        
+        db: AsyncSession
     ):
         self.user_repository = user_repository
         self.password_hasher = password_hasher
@@ -21,6 +23,7 @@ class UserService:
         
         hashed_password = self.password_hasher.hash(password)
         user = User.create(login, email, hashed_password)
-        saved_user = self.user_repository.save(user)
+        saved_user = await self.user_repository.save(user)
+        await self.db.commit()
         
         return saved_user

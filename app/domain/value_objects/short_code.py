@@ -4,10 +4,11 @@ import secrets
 
 @dataclass(frozen=True)
 class ShortCode:
-    @property
-    def code(self) -> str:
-        return self._code
+    value: str
     
     @classmethod
     def generate(cls) -> "ShortCode":
         return cls(secrets.token_urlsafe(6)[:6])
+    
+    def __str__(self) -> str:
+        return self.value
