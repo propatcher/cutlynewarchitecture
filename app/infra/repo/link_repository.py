@@ -31,9 +31,9 @@ class PostgresLinkRepository(LinkRepository):
         existing = result.scalar_one_or_none()
         
         if existing:
-            existing.original_url = link.original_url,
-            existing.short_code = link.short_code.value,
-            existing.user_id = link.user_id,
+            existing.original_url = link.original_url
+            existing.short_code = link.short_code.value
+            existing.user_id = link.user_id
             existing.click_count = link.click_count
         
         else:
@@ -46,19 +46,23 @@ class PostgresLinkRepository(LinkRepository):
                 click_count=link.click_count
             )
             self.db.add(model)
+        return link
     
     async def get_user_links(self, user_id: str) -> list[Link]:
         stmt = select(LinkModel).where(LinkModel.user_id == user_id)
         result = await self.db.execute(stmt)
-        model = result.scalar_one_or_none()
-        return self._to_entity(model) if model else None
+        models  = result.scalars().all()
+        return [self._to_entity(model) for model in models]
         
         
     def _to_entity(self, model: LinkModel) -> Link:
+        
+        short_code = ShortCode(model.short_code)
+        
         return Link(
             id = model.id,
             original_url = model.original_url,
-            short_code = model.short_code,
+            short_code = short_code,
             user_id = model.user_id,
             created_at = model.created_at,
             click_count = model.click_count
