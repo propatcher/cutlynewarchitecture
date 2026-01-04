@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import secrets
 
 
-@dataclass
+@dataclass(frozen=True)
 class ShortCode:
     @property
     def code(self) -> str:

@@ -11,6 +11,13 @@ class PostgresLinkRepository(LinkRepository):
         model = self.db.query(LinkModel).filter(LinkModel.short_code == code).first()
         return self._to_entity(model) if model else None
     
+    def get_by_url(self, url: str, user_id: str = None) -> Optional[Link]:
+        query = self.db.query(LinkModel).filter(LinkModel.original_url == url).first()
+        if user_id:
+            query = query.filter(LinkModel.user_id == user_id)
+        model = query.first()
+        return self._to_entity(model) if model else None
+    
     def save(self, link: Link) -> Link:
         model = LinkModel(
             id = link.id,
@@ -23,6 +30,10 @@ class PostgresLinkRepository(LinkRepository):
         self.db.commit()
         return link
     
+    def get_user_links(self, user_id: str) -> list[Link]:
+        models = self.db.query(LinkModel).filter(LinkModel.user_id == user_id).all()
+        return [self._to_entity(model) for model in models]
+        
     def _to_entity(self, model: LinkModel) -> Link:
         return Link(
             id = model.id,

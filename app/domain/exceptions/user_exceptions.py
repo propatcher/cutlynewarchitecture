@@ -2,9 +2,9 @@ from dataclasses import dataclass
 from domain.exceptions.base_exception import BaseException
 
 @dataclass(eq=False)
-class LinkNotFoundError(BaseException):
+class UserAlreadyExist(BaseException):
     text: str
 
     @property
     def message(self):
-        return f'Ссылка не найдена "{self.text[:255]}..."'
+        return f'Пользователь уже существует "{self.text[:255]}..."'

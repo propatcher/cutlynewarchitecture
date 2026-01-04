@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass(eq=False)
-class ApplicationException(Exception):
+class BaseException(Exception):
     @property
     def message(self):
         return 'Произошла ошибка приложения,'
