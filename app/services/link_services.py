@@ -1,14 +1,16 @@
 import secrets
-from domain.entities.link import Link
-from domain.repo.link_repository import LinkRepository
-from domain.exceptions.link_exceptions import LinkNotFoundError
-from domain.value_objects.short_code import ShortCode
+
+from sqlalchemy import UUID
+from app.domain.entities.link import Link
+from app.domain.repo.link_repository import LinkRepository
+from app.domain.exceptions.link_exceptions import LinkNotFoundError
+from app.domain.value_objects.short_code import ShortCode
 
 class LinkService:
     def __init__(self, link_repo: LinkRepository):
         self.link_repo = link_repo
         
-    def create_short_link(self, original_url: str, user_id: str) -> Link:
+    def create_short_link(self, original_url: str, user_id: UUID) -> Link:
         short_code = self.generate_short_code()
         link = Link.create(original_url, short_code, user_id)
         return self.link_repo.save(link)

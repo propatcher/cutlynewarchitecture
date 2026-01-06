@@ -1,11 +1,11 @@
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import UUID, select
 from app.domain.value_objects.short_code import ShortCode
-from domain.repo.link_repository import LinkRepository
-from domain.entities.link import Link
+from app.domain.repo.link_repository import LinkRepository
+from app.domain.entities.link import Link
 from sqlalchemy.ext.asyncio import AsyncSession
-from infra.database.models import LinkModel
+from app.infra.database.models import LinkModel
 
 class PostgresLinkRepository(LinkRepository):
     def __init__(self, db_session: AsyncSession):
@@ -17,7 +17,7 @@ class PostgresLinkRepository(LinkRepository):
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None    
         
-    async def get_by_url(self, url: str, user_id: str = None) -> Optional[Link]:
+    async def get_by_url(self, url: str, user_id: UUID = None) -> Optional[Link]:
         stmt = select(LinkModel).where(LinkModel.original_url == url)
         if user_id:
             stmt = stmt.where(LinkModel.user_id == user_id)
@@ -48,7 +48,7 @@ class PostgresLinkRepository(LinkRepository):
             self.db.add(model)
         return link
     
-    async def get_user_links(self, user_id: str) -> list[Link]:
+    async def get_user_links(self, user_id: UUID) -> list[Link]:
         stmt = select(LinkModel).where(LinkModel.user_id == user_id)
         result = await self.db.execute(stmt)
         models  = result.scalars().all()

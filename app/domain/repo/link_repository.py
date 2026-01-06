@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import Optional
+
+from sqlalchemy import UUID
 from app.domain.value_objects.short_code import ShortCode
-from domain.entities.link import Link
+from app.domain.entities.link import Link
 
 class LinkRepository(ABC):
 
@@ -10,7 +12,7 @@ class LinkRepository(ABC):
         ...
     
     @abstractmethod
-    async def get_by_url(self, url: str, user_id: str = None) -> Optional[Link]:
+    async def get_by_url(self, url: str, user_id: UUID = None) -> Optional[Link]:
         ...
         
     @abstractmethod
@@ -18,5 +20,5 @@ class LinkRepository(ABC):
         ...
     
     @abstractmethod
-    async def get_user_links(self, user_id: str) -> list[Link]:
+    async def get_user_links(self, user_id: UUID) -> list[Link]:
         ...

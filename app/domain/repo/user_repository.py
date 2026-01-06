@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import Optional
-from domain.entities.user import User
+
+from sqlalchemy import UUID
+from app.domain.entities.user import User
 
 class UserRepository(ABC):
 
     @abstractmethod
-    async def get_by_id(self,id:str) -> Optional[User]:
+    async def get_by_id(self,id:UUID) -> Optional[User]:
         ...
     
     @abstractmethod

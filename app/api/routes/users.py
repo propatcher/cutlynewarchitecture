@@ -1,22 +1,38 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.schemas.users_schema import SUserRegistration
+from app.api.dependecies import get_user_service
+from app.api.schemas.users_schema import UserRegisterRequest, UserResponse
 from app.domain.entities.user import User
 from app.services.user_services import UserService
+from app.domain.exceptions.user_exceptions import UserAlreadyExists
 router = APIRouter(
     prefix = "/users",
-    tags=["users"]
+    tags=["Пользователи"]
 )
 
 @router.post("/register",
             summary="Register user",
             description="Return the access token if succes else error",
             responses={
-                200: {"description": "Success"},
                 409: {"description": "User already exist"},
-            })
-async def new_user(user_data: SUserRegistration) -> User:
-    return await UserService.register_user(login = user_data.login, email = user_data.email, password = user_data.password)
+            },
+            response_model=UserResponse)
+async def new_user(user_data: UserRegisterRequest, user_service: UserService = Depends(get_user_service)) -> User:
+    try:
+        user = await user_service.register_user(
+            login=user_data.login,
+            email=user_data.email,
+            password=user_data.password
+        )
+        return UserResponse(
+            id=user.id,
+            login=user.login,
+            email=user.email,
+            created_at=user.created_at
+        )
+    except UserAlreadyExists as e:
+        raise HTTPException(status_code=409,detail=str(e))  
+        
 
 
 # @router.get(

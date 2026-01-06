@@ -1,21 +1,18 @@
-FROM python:3.13
+FROM python:3.14-slim
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app .
+WORKDIR /app
 
-RUN apt update -y && \
-    apt install -y python3-dev \
-    gcc \
-    musl-dev
+COPY ../pyproject.toml ../poetry.lock* ./
 
-ADD pyproject.toml /app
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install poetry \
+    && poetry config virtualenvs.create false \
+    && poetry install --no-root --no-interaction --no-ansi
 
-RUN pip install --upgrade pip
-RUN pip install poetry
+COPY ../app ./app
+COPY ../alembic.ini ./
+COPY ../migration ./migration
 
-RUN poetry config virtualenvs.create false
-RUN poetry install --no-root --no-interaction --no-ansi
-
-COPY . .
+CMD ["sh", "-c", "until pg_isready -h db -p 5432 -U user; do echo 'Waiting for database...'; sleep 2; done && alembic revision --autogenerate && alembic upgrade head && uvicorn app.api.main:create_app --factory --host 0.0.0.0 --port 8000"]

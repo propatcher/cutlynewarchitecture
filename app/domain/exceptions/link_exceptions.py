@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from domain.exceptions.base_exception import BaseException
+from app.domain.exceptions.base_exception import BaseException
 
 @dataclass(eq=False)
 class LinkNotFoundError(BaseException):

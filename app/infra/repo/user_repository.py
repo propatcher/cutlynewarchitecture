@@ -1,16 +1,16 @@
 from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from domain.repo.user_repository import UserRepository
-from domain.entities.user import User
-from infra.database.models import UserModel
+from app.domain.repo.user_repository import UserRepository
+from app.domain.entities.user import User
+from app.infra.database.models import UserModel
 from uuid import UUID
 
 class UserPostgresRepository(UserRepository):
     def __init__(self, db_session: AsyncSession):
         self.db = db_session    
 
-    async def get_by_id(self,id:str) -> Optional[User]:
+    async def get_by_id(self,id:UUID) -> Optional[User]:
         stmt = select(UserModel).where(UserModel.id == id)
         result = await self.db.execute(stmt)
         model = result.scalar_one_or_none()
@@ -30,7 +30,7 @@ class UserPostgresRepository(UserRepository):
         
     
     async def save(self, user: User) -> User:
-        stmt = select(UserModel).where(UserModel.id == str(user.id))
+        stmt = select(UserModel).where(UserModel.id == user.id)
         result = await self.db.execute(stmt)
         existing = result.scalar_one_or_none()
         
@@ -41,7 +41,7 @@ class UserPostgresRepository(UserRepository):
             existing.created_at = user.created_at
         else:
             model = UserModel(
-                id=str(user.id),
+                id=user.id,
                 login=user.login,
                 email=user.email,
                 hashed_password=user.hashed_password,
@@ -53,7 +53,7 @@ class UserPostgresRepository(UserRepository):
 
     def _to_entity(self, model:UserModel) -> User:
         return User(
-            id = UUID(model.id),
+            id = model.id,
             login = model.login,
             email = model.email,
             hashed_password = model.hashed_password,
