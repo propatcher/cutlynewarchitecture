@@ -6,7 +6,7 @@
           dockerfile: Dockerfile
         container_name: cutly_new
         env_file:
-          - .env-non-dev
+          - ../.env-non-dev
         ports:
           - "8000:8000"
         depends_on:
@@ -18,7 +18,7 @@
         volumes:
           - postgres_data:/var/lib/postgresql/data
         env_file:
-          - .env-non-dev
+          - ../.env-non-dev
         ports:
           - "5432:5432"
     volumes:

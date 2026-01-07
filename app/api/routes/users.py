@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Optional
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Response
 
 from app.api.dependecies import get_user_service
 from app.api.schemas.users_schema import UserRegisterRequest, UserResponse
@@ -9,6 +10,7 @@ router = APIRouter(
     prefix = "/users",
     tags=["Пользователи"]
 )
+from app.infra.auth.token_setter import create_access_token
 
 @router.post("/register",
             summary="Register user",
@@ -17,13 +19,20 @@ router = APIRouter(
                 409: {"description": "User already exist"},
             },
             response_model=UserResponse)
-async def new_user(user_data: UserRegisterRequest, user_service: UserService = Depends(get_user_service)) -> User:
+async def new_user(response: Response,user_data: UserRegisterRequest, user_service: UserService = Depends(get_user_service), cutly_auth_token: Optional[str] = Cookie(None)) -> User:
     try:
         user = await user_service.register_user(
             login=user_data.login,
             email=user_data.email,
             password=user_data.password
         )
+        if cutly_auth_token is None:
+            access_token = create_access_token({"sub": str(user.id)})
+            response.set_cookie(
+            "cutly_auth_token",
+            access_token,
+            httponly=True,
+            )
         return UserResponse(
             id=user.id,
             login=user.login,
@@ -33,18 +42,3 @@ async def new_user(user_data: UserRegisterRequest, user_service: UserService = D
     except UserAlreadyExists as e:
         raise HTTPException(status_code=409,detail=str(e))  
         
-
-
-# @router.get(
-#     "/me",
-#     response_model=UserResponse,
-#     summary="Get current user",
-#     description="Returns the currently authenticated user's profile",
-#     responses={
-#         200: {"description": "Success"},
-#         401: {"description": "Not authenticated"},
-#         404: {"description": "User not found"}
-#     }
-# )
-# async def read_users_me(current_user: User = Depends(get_current_user)):
-#     return current_user

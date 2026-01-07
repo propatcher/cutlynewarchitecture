@@ -14,6 +14,9 @@ class Config(BaseSettings):
     POSTGRES_PASSWORD: str
     REDIS_HOST: str
     REDIS_PORT: str
+    
+    ALGORITHM: str
+    SECRET_KEY: str
 
     @property
     def DATABASE_URL(self):
