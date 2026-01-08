@@ -1,3 +1,4 @@
+from typing import Union
 from uuid import UUID
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
@@ -5,6 +6,10 @@ from datetime import datetime
 class UserRegisterRequest(BaseModel):
     login: str
     email: EmailStr
+    password: str
+
+class UserLoginRequest(BaseModel):
+    username: Union[str, EmailStr]
     password: str
 
 class UserResponse(BaseModel):
@@ -15,3 +20,11 @@ class UserResponse(BaseModel):
     
     class Config:
         orm_mode = True
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str
+    
+class UserRegisterResponse(BaseModel):
+    user: UserResponse 
+    token: TokenResponse

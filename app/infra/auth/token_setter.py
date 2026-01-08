@@ -1,12 +1,13 @@
 from datetime import datetime, timedelta, timezone
-from jose import jwt
+import jwt
 from app.settings.config import config
 
-def create_access_token(data: dict) -> str:
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=60)
-    to_encode.update({"exp": int(expire.timestamp())})
-    encoded_jwt = jwt.encode(
-        to_encode, config.SECRET_KEY, algorithm=config.ALGORITHM
-    )
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta 
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, config.SECRET_KEY, config.ALGORITHM)
     return encoded_jwt

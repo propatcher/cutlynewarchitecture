@@ -1,11 +1,11 @@
-from passlib.context import CryptContext
+from pwdlib import PasswordHash
 
 class PasswordHasher:
     def __init__(self):
-        self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        self.password_hash = PasswordHash.recommended()
     
     def hash(self, password: str) -> str:
-        return self.pwd_context.hash(password)
+        return self.password_hash.hash(password)
     
     def verify(self, plain_password: str, hashed_password: str) -> bool:
-        return self.pwd_context.verify(plain_password, hashed_password)
+        return self.password_hash.verify(plain_password, hashed_password)

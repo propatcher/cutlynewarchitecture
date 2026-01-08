@@ -1,5 +1,5 @@
 from typing import Optional
-from sqlalchemy import select
+from sqlalchemy import select,or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.domain.repo.user_repository import UserRepository
 from app.domain.entities.user import User
@@ -28,6 +28,11 @@ class UserPostgresRepository(UserRepository):
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
         
+    async def get_by_username(self,username:str) -> Optional[User]:
+        stmt = select(UserModel).where(or_(UserModel.email == username, UserModel.login == username))
+        result = await self.db.execute(stmt)
+        model = result.scalar_one_or_none()
+        return self._to_entity(model) if model else None
     
     async def save(self, user: User) -> User:
         stmt = select(UserModel).where(UserModel.id == user.id)
