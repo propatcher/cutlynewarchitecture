@@ -8,3 +8,10 @@ class LinkNotFoundError(BaseException):
     @property
     def message(self):
         return f'Ссылка не найдена "{self.text[:255]}..."'
+
+class ShortCodeAlreadyExistsError(BaseException):
+    text: str
+
+    @property
+    def message(self):
+        return f'Ссылка уже существует "{self.text[:255]}..."'

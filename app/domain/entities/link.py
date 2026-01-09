@@ -14,7 +14,8 @@ class Link:
     click_count : int = 0
     
     @classmethod
-    def create(cls, original_url: str, short_code: str, user_id: UUID) -> "Link":
+    def create(cls, original_url: str,user_id: UUID) -> "Link":
+        short_code = ShortCode.generate()
         return cls(
             id = uuid4(),
             original_url = original_url,

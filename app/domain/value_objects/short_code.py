@@ -7,8 +7,12 @@ class ShortCode:
     value: str
     
     @classmethod
-    def generate(cls) -> "ShortCode":
-        return cls(secrets.token_urlsafe(6)[:6])
+    def generate(cls, length: int = 6) -> "ShortCode":
+        return cls(secrets.token_urlsafe(length)[:length ])
+    
+    classmethod
+    def create(cls, value: str) -> "ShortCode":
+        return cls(value)
     
     def __str__(self) -> str:
         return self.value

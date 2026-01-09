@@ -1,13 +1,14 @@
 from typing import Optional
 
 from sqlalchemy import UUID, select
+from app.domain.exceptions.link_exceptions import ShortCodeAlreadyExistsError
 from app.domain.value_objects.short_code import ShortCode
 from app.domain.repo.link_repository import LinkRepository
 from app.domain.entities.link import Link
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.infra.database.models import LinkModel
 
-class PostgresLinkRepository(LinkRepository):
+class LinkPostgresRepository(LinkRepository):
     def __init__(self, db_session: AsyncSession):
         self.db = db_session
     
@@ -17,7 +18,7 @@ class PostgresLinkRepository(LinkRepository):
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None    
         
-    async def get_by_url(self, url: str, user_id: UUID = None) -> Optional[Link]:
+    async def get_by_url_and_user(self, url: str, user_id: UUID = None) -> Optional[Link]:
         stmt = select(LinkModel).where(LinkModel.original_url == url)
         if user_id:
             stmt = stmt.where(LinkModel.user_id == user_id)
@@ -26,27 +27,41 @@ class PostgresLinkRepository(LinkRepository):
         return self._to_entity(model) if model else None
     
     async def save(self, link: Link) -> Link:
+        existing = await self.get_by_short_code(link.short_code)
+        
+        if existing and existing.id == link.id:
+            raise ShortCodeAlreadyExistsError(f"Short code {link.short_code} already exists")
+        
         stmt = select(LinkModel).where(LinkModel.id == link.id)
         result = await self.db.execute(stmt)
-        existing = result.scalar_one_or_none()
+        model = result.scalar_one_or_none()
         
-        if existing:
-            existing.original_url = link.original_url
-            existing.short_code = link.short_code.value
-            existing.user_id = link.user_id
-            existing.click_count = link.click_count
-        
+        if model:
+            model.original_url = link.original_url
+            model.short_code = str(link.short_code)
+            model.user_id = link.user_id
+            model.click_count = link.click_count
+            model.created_at = link.created_at
         else:
             model = LinkModel(
                 id=link.id,
                 original_url=link.original_url,
-                short_code=link.short_code.value,
+                short_code=str(link.short_code),
                 user_id=link.user_id,
                 created_at=link.created_at,
                 click_count=link.click_count
             )
             self.db.add(model)
-        return link
+        await self.db.commit()
+        await self.db.refresh(model)
+    
+    async def increment_click_count(self, link_id:UUID) -> None:
+        stmt = select(LinkModel).where(LinkModel.id == link_id)
+        result = await self.db.execute(stmt)
+        model = result.scalar_one_or_none()
+        if model:
+            model.click_count += 1
+            await self.db.commit()
     
     async def get_user_links(self, user_id: UUID) -> list[Link]:
         stmt = select(LinkModel).where(LinkModel.user_id == user_id)

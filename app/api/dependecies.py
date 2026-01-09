@@ -3,9 +3,12 @@ from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from app.domain.entities.user import User
 from app.domain.exceptions.user_exceptions import IncorrectId, IncorrectIdType, TokenAbsentException, TokenJwtException
+from app.domain.repo.link_repository import LinkRepository
 from app.domain.repo.user_repository import UserRepository
 from app.infra.auth.password_hasher import PasswordHasher
 from app.infra.repo.user_repository import UserPostgresRepository
+from app.infra.repo.link_repository import LinkPostgresRepository
+from app.services.link_services import LinkService
 from app.services.user_services import UserService
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.infra.database.session import async_session
@@ -39,9 +42,18 @@ def get_user_service(
 ) -> UserService:
     return UserService(user_repository=user_repo, password_hasher=password_hasher,db_session=db)
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login",description="Bearer Token New System",auto_error=False)
+def get_link_repository(db = Depends(get_db)) -> LinkRepository:
+    return LinkPostgresRepository(db)
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], user_repo: UserRepository = Depends(get_user_repository)) -> Optional[User]:
+def get_link_service(
+    link_repo: LinkRepository = Depends(get_link_repository),
+    db: AsyncSession = Depends(get_db)
+) -> LinkService:
+    return LinkService(link_repository=link_repo, db)
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/token",description="Bearer Token New System",auto_error=False)
+
+async def get_current_user(token: str = Depends(oauth2_scheme), user_repo: UserRepository = Depends(get_user_repository)) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",

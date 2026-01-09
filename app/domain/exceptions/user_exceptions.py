@@ -19,6 +19,14 @@ class UserNotExist(BaseException):
         return f'Пользователя не существует "{self.text[:255]}"'
 
 @dataclass(eq=False)
+class UserWrongData(BaseException):
+    text: str
+    
+    @property
+    def message(self):
+        return f'Неправильный логин или пароль "{self.text[:255]}"'
+
+@dataclass(eq=False)
 class TokenJwtException(BaseException):
     text: str
     
